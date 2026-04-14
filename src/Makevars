@@ -1,2 +1,0 @@
-PKG_CXXFLAGS = -O3 -fopenmp -march=native
-PKG_LIBS = -fopenmp

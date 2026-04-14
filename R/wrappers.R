@@ -103,8 +103,10 @@ spherical_asd_on_one_point <- function(X, i) {
 #' result$max_index   # index of max depth
 #'
 #' @export
-angularsimplicialdepth <- function(X, x = NULL) {
+angularsimplicialdepth <- function(X, x = NULL, threads = NULL) {
     input_check(X, x)
+
+    threads_i <- if (is.null(threads)) 0L else as.integer(threads)
 
     n <- nrow(X)
     d <- ncol(X)
@@ -158,7 +160,7 @@ angularsimplicialdepth <- function(X, x = NULL) {
     }
     if (d == 3) {
         if (is.null(x)) {
-            result <- vapply(seq_len(nrow(X)), function(i) spherical_asd_on_one_point(X, i), numeric(1)) / choose(n-1, 3)
+            result <- spherical_asd_all_points(X, threads_i) / choose(n-1, 3)
             max_depth_index <- which.max(result)
             return(depth_result(depth=result,
                                 max_depth=result[max_depth_index],
@@ -241,8 +243,10 @@ sdk_on_one_point <- function(X, i, k) {
 #' result$max_index
 #'
 #' @export
-simplicialdepth <- function(X, x=NULL) {
+simplicialdepth <- function(X, x=NULL, threads = NULL) {
     input_check(X, x)
+
+    threads_i <- if (is.null(threads)) 0L else as.integer(threads)
 
     # X <- remove_x_from_X(X, x)
 
@@ -294,7 +298,7 @@ simplicialdepth <- function(X, x=NULL) {
     }
     if (d == 3) {
         if (is.null(x)) {
-            result <- vapply(seq_len(nrow(X)), function(i) sdk_on_one_point(X, i, 4), numeric(1)) / choose(n-1, 4)
+            result <- SDk_all_points(X, 4L, threads_i) / choose(n-1, 4)
             max_depth_index <- which.max(result)
             return(depth_result(depth=result,
                                 max_depth=result[max_depth_index],
@@ -305,7 +309,7 @@ simplicialdepth <- function(X, x=NULL) {
             result <- apply(x, 1, function(row) {
                 X_new <- remove_x_from_X(X, row)
                 if (nrow(X_new) >= 4) {
-                    SDk_parallel(X_new, row, 4) / choose(nrow(X_new), 4)
+                    SDk_parallel_threads(X_new, row, 4L, threads_i) / choose(nrow(X_new), 4)
                 } else {
                     return(0)
                 }})
@@ -317,7 +321,7 @@ simplicialdepth <- function(X, x=NULL) {
         }
         X_new <- remove_x_from_X(X, x)
         if (nrow(X_new) >= 4) {
-            result <- SDk_parallel(X_new, x, 4) / choose(nrow(X_new), 4)
+            result <- SDk_parallel_threads(X_new, x, 4L, threads_i) / choose(nrow(X_new), 4)
         } else {
             return(0)
         }
@@ -358,11 +362,17 @@ simplicialdepth <- function(X, x=NULL) {
 #' result$max_index
 #'
 #' @export
-khulldepth <- function(X, x=NULL, k) {
+khulldepth <- function(X, x=NULL, k, threads = NULL) {
     input_check(X, x)
+
+    threads_i <- if (is.null(threads)) 0L else as.integer(threads)
 
     n <- nrow(X)
     d <- ncol(X)
+
+    if (d != 3) {
+        stop("Not implemented: khulldepth currently supports only 3D data (ncol(X) = 3).")
+    }
     
     if (is.null(x)) {
         if (n < k+1)
@@ -375,7 +385,7 @@ khulldepth <- function(X, x=NULL, k) {
         stop("k must be bigger than the number of columns of X.")
 
     if (is.null(x)) {
-        result <- vapply(seq_len(nrow(X)), function(i) sdk_on_one_point(X, i, k), numeric(1)) / choose(n-1, k)
+        result <- SDk_all_points(X, as.integer(k), threads_i) / choose(n-1, k)
         max_depth_index <- which.max(result)
         return(depth_result(depth=result,
                             max_depth=result[max_depth_index],
@@ -384,9 +394,9 @@ khulldepth <- function(X, x=NULL, k) {
     }
     if (is.matrix(x)) {
         result <- apply(x, 1, function(row) {
-            X_new <- remove_x_from_X(X, x)
+            X_new <- remove_x_from_X(X, row)
             if (nrow(X_new) >= k) {
-                SDk_parallel(X_new, row, k) / choose(nrow(X_new), k)
+                SDk_parallel_threads(X_new, row, as.integer(k), threads_i) / choose(nrow(X_new), k)
             } else {
                 return(0)
             }})
@@ -399,7 +409,7 @@ khulldepth <- function(X, x=NULL, k) {
     # The only option left is that x is a numeric vector of length equal to d
     X_new <- remove_x_from_X(X, x)
     if (nrow(X_new) >= k) {
-        result <- SDk_parallel(X_new, x, k) / choose(nrow(X_new), k)
+        result <- SDk_parallel_threads(X_new, x, as.integer(k), threads_i) / choose(nrow(X_new), k)
     } else {
         result <- 0
     }

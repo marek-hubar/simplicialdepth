@@ -24,7 +24,6 @@ long long circular_asd(Point2D ray, const std::vector<Point2D>& points) {
     ray_angle = ray_angle < 0 ? ray_angle + 2 * M_PI : ray_angle;
 
     std::vector<Point2D_indexed> sorted_2d_points(m);
-    #pragma omp for schedule(static)
     for(int i=0; i<m; ++i) {
         sorted_2d_points[i].p = points[i] - ray;
         double angle = atan2(points[i].y, points[i].x);
@@ -79,7 +78,6 @@ long long circular_asd_01(Point2D ray, const std::vector<Point2D>& points) {
     int N0 = 0, N1 = 0;
 
     std::vector<Point2D_indexed> sorted_2d_points(m);
-    #pragma omp for schedule(static)
     for(int i=0; i<m; ++i) {
         sorted_2d_points[i].p = points[i];
         // Find the polar angle with respect to the ray
@@ -133,7 +131,6 @@ std::vector<Arc> circular_asd_01_all_points(const std::vector<Point2D>& points) 
     int N0 = 0, N1 = 0;
 
     std::vector<Point2D_indexed> sorted_2d_points(m);
-    #pragma omp parallel for schedule(static)
     for(int i=0; i<m; i++) {
         sorted_2d_points[i].p = points[i],
         // Find the polar angle with respect to the ray
@@ -184,7 +181,6 @@ std::vector<Arc> circular_asd_01_all_points(const std::vector<Point2D>& points) 
             angles[j++] = sorted_2d_points[mod(i,m)].angle;
     }
 
-    #pragma omp parallel for schedule(static)
     for (int i=0; i<m; i++) {
         int orig_index = sorted_2d_points[i].original_index;
         arcs[orig_index].left_angle = angles[mod(i-1,m)],

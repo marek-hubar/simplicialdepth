@@ -1,5 +1,6 @@
 useDynLib(simplicialdepth, .registration = TRUE)
 importFrom(Rcpp, evalCpp)
+import(RcppParallel)
 export(simplicialdepth)
 export(angularsimplicialdepth)
 export(khulldepth)

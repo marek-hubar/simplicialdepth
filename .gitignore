@@ -3,3 +3,11 @@
 *.out
 .RData
 .Rhistory
+.DS_Store
+
+# R package build/check artifacts
+*.Rcheck/
+*.tar.gz
+
+# Generated at install time by configure
+src/Makevars

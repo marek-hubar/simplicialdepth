@@ -4,7 +4,7 @@
 \alias{khulldepth}
 \title{k-Hull Depth}
 \usage{
-khulldepth(X, x = NULL, k)
+khulldepth(X, x = NULL, k, threads = NULL)
 }
 \arguments{
 \item{X}{Numeric matrix of size \eqn{n \times d} containing sample points.}
@@ -12,6 +12,9 @@ khulldepth(X, x = NULL, k)
 \item{x}{Optional. Query point(s) as a vector or matrix with same number of columns as `X`.}
 
 \item{k}{Integer, hull size parameter. Must satisfy \eqn{k > d} and \eqn{k \le n}.}
+
+\item{threads}{Optional integer. Number of worker threads to use for computations that can be parallelized.
+If `NULL` (default) or non-positive, the default RcppParallel/TBB setting is used.}
 }
 \value{
 An object of class \code{depth_result} with components:
@@ -23,7 +26,7 @@ An object of class \code{depth_result} with components:
 }
 }
 \description{
-Computes the \eqn{k}-hull depth for 2D or 3D data, either for all points in a sample
+Computes the \eqn{k}-hull depth for 3D data, either for all points in a sample
 or for user-specified query points.
 }
 \details{
@@ -31,7 +34,7 @@ Depths are normalized by \eqn{choose(n-1, k)} for sample points and
 \eqn{choose(n, k)} for query points. If \eqn{k \le d} or \eqn{k > n}, zero depths are returned.
 }
 \examples{
-X <- matrix(rnorm(20), ncol = 2)
+X <- matrix(rnorm(30), ncol = 3)
 result <- khulldepth(X, k = 4)
 result$depth
 result$max_depth

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Cleanup script for simplicialdepth
+# Remove generated Makevars produced by configure.
+
+rm -f src/Makevars
+
+exit 0

@@ -5,53 +5,36 @@
 #include <cmath>
 #include <algorithm>
 
+#include "rcpp_parallel_utils.h"
+
+#if __has_include(<tbb/parallel_sort.h>)
+    #include <tbb/parallel_sort.h>
+    #define SIMPLICIALDEPTH_HAS_TBB_PARALLEL_SORT 1
+#else
+    #define SIMPLICIALDEPTH_HAS_TBB_PARALLEL_SORT 0
+#endif
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
 const double EPS = 1e-12;
 
-#ifdef _OPENMP
-#include <omp.h>
-#else
-inline int omp_get_max_threads() { return 1; }
-inline int omp_get_thread_num() { return 0; }
-#endif
+
 
 template<typename T, typename Compare>
 void parallel_sort(std::vector<T>& vec, Compare comp) {
-    int n = vec.size();
-    if (n <= 1000) {  // small vector, just sort sequentially
+    const std::size_t n = vec.size();
+    if (n <= 1000) {
         std::sort(vec.begin(), vec.end(), comp);
         return;
     }
 
-    int num_threads = omp_get_max_threads();
-    std::vector<int> boundaries(num_threads + 1, 0);
-
-    // Partition the vector into roughly equal chunks
-    for (int t = 0; t <= num_threads; t++)
-        boundaries[t] = t * n / num_threads;
-
-    // Sort each chunk in parallel
-    #pragma omp parallel for schedule(static)
-    for (int t = 0; t < num_threads; t++) {
-        std::sort(vec.begin() + boundaries[t], vec.begin() + boundaries[t + 1], comp);
-    }
-
-    // Iteratively merge sorted chunks
-    for (int width = 1; width < num_threads; width *= 2) {
-        int max_merge_index = (num_threads / (2 * width)) * 2 * width;
-#pragma omp parallel for schedule(static)
-        for (int t = 0; t < max_merge_index; t += 2 * width) {
-            std::inplace_merge(
-                vec.begin() + boundaries[t],
-                vec.begin() + boundaries[t + width],
-                vec.begin() + boundaries[t + 2 * width],
-                comp
-            );
-        }
-    }
+#if SIMPLICIALDEPTH_HAS_TBB_PARALLEL_SORT
+    tbb::parallel_sort(vec.begin(), vec.end(), comp);
+#else
+    std::sort(vec.begin(), vec.end(), comp);
+#endif
 }
 
 inline int mod(int k, int n) {

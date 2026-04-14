@@ -26,10 +26,10 @@ long long spherical_asd(Point3D ray, const std::vector<Point3D>& P) {
     Point2D ray_projected = {ray.x / ray.z, ray.y / ray.z};
     // Project all the other points onto this plane
     std::vector<Point2D> P_projected(n);
-    for (int i=0; i<n; i++) P_projected[i] = {P[i].x / P[i].z, P[i].y / P[i].z};
+    for (int i=0; i<n; i++) P_projected[i] = {P_prime[i].x / P_prime[i].z, P_prime[i].y / P_prime[i].z};
     // Find the color of each point (is it in the same half space as ray?)
     std::vector<bool> P_colors(n);
-    for (int i=0; i<n; i++) P_colors[i] = ((P[i].z > 0) == ray_color);
+    for (int i=0; i<n; i++) P_colors[i] = ((P_prime[i].z > 0) == ray_color);
     // Shift all the points so that the projected ray becomes the origin
     for (int i=0; i<n; i++) P_projected[i] = P_projected[i] - ray_projected;
 
@@ -56,7 +56,6 @@ long long spherical_asd(Point3D ray, const std::vector<Point3D>& P) {
     };
 
     long long N2 = 0;
-    #pragma omp for schedule(dynamic)
     for (const auto& red_point : P_red) {
         Point2D center_shifted = {-red_point.x, -red_point.y};
         std::vector<ProjPoint> P_blue_shifted(n_blue_points);
@@ -106,15 +105,11 @@ long long spherical_asd(Point3D ray, const std::vector<Point3D>& P) {
             else case_3 += zeros;
         }
 
-        #pragma omp critical
-        {
         N2 = N2 + case_1 + case_2 + case_3;
-        }
     }
 
     // Number of intersections between all red segments with blue segments whose one endpoint is the origin
     long long N3 = 0;
-    #pragma omp for schedule(dynamic)
     for (const auto& blue_point : P_blue) {
         // Rotate all red points counterclockwise so that the blue point Blue[b,] ends up on the negative x-axis
         double theta = atan2(blue_point.y, blue_point.x);
@@ -150,10 +145,7 @@ long long spherical_asd(Point3D ray, const std::vector<Point3D>& P) {
             if (red_point.label == 0) zeros++;
             else total_left += zeros;
         }
-        #pragma omp critical
-        {
         N3 = N3 + red_labels_ones * red_labels_zeros - total_right - total_left;
-        }
     }
     return N1 + N2 + N3;
 }
@@ -181,4 +173,55 @@ long long spherical_asd(NumericMatrix X, NumericVector ray) {
     Point3D rayray = { ray[0], ray[1], ray[2] };
 
     return spherical_asd(rayray, P);
+}
+
+// Compute leave-one-out spherical ASD for every row of X (each row is ray; X without that row is sample).
+// This is the fast path for x = NULL wrappers: parallelize across i to avoid per-point thread startup.
+// [[Rcpp::export]]
+NumericVector spherical_asd_all_points(NumericMatrix X, int threads = 0) {
+    const int n = X.nrow();
+    if (n < 3) {
+        return NumericVector(n);
+    }
+    if (X.ncol() != 3) {
+        stop("X must be n x 3");
+    }
+
+    std::vector<Point3D> Pfull(static_cast<std::size_t>(n));
+    for (int i = 0; i < n; i++) {
+        Pfull[static_cast<std::size_t>(i)].x = X(i, 0);
+        Pfull[static_cast<std::size_t>(i)].y = X(i, 1);
+        Pfull[static_cast<std::size_t>(i)].z = X(i, 2);
+    }
+
+    NumericVector out(n);
+    RcppParallel::RVector<double> out_view(out);
+
+    struct Worker : public RcppParallel::Worker {
+        const std::vector<Point3D>& P;
+        const int n;
+        RcppParallel::RVector<double> out;
+
+        Worker(const std::vector<Point3D>& P_, int n_, RcppParallel::RVector<double> out_)
+            : P(P_), n(n_), out(out_) {}
+
+        void operator()(std::size_t begin, std::size_t end) {
+            std::vector<Point3D> sample;
+            sample.reserve(static_cast<std::size_t>(n - 1));
+
+            for (std::size_t ii = begin; ii < end; ++ii) {
+                const int i = static_cast<int>(ii);
+                sample.clear();
+                for (int j = 0; j < n; ++j) {
+                    if (j == i) continue;
+                    sample.push_back(P[static_cast<std::size_t>(j)]);
+                }
+                out[ii] = static_cast<double>(spherical_asd(P[static_cast<std::size_t>(i)], sample));
+            }
+        }
+    };
+
+    Worker worker(Pfull, n, out_view);
+    simplicialdepth::parallel_for(0, static_cast<std::size_t>(n), worker, threads);
+    return out;
 }

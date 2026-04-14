@@ -17,11 +17,23 @@ SDk_parallel <- function(Xinput_mat, x_vec, k) {
     .Call(`_simplicialdepth_SDk_parallel`, Xinput_mat, x_vec, k)
 }
 
+SDk_parallel_threads <- function(Xinput_mat, x_vec, k, threads = 0L) {
+    .Call(`_simplicialdepth_SDk_parallel_threads`, Xinput_mat, x_vec, k, threads)
+}
+
+SDk_all_points <- function(Xinput_mat, k, threads = 0L) {
+    .Call(`_simplicialdepth_SDk_all_points`, Xinput_mat, k, threads)
+}
+
 simplicial_depth_2d <- function(points_mat, q_vec) {
     .Call(`_simplicialdepth_simplicial_depth_2d`, points_mat, q_vec)
 }
 
 spherical_asd <- function(X, ray) {
     .Call(`_simplicialdepth_spherical_asd`, X, ray)
+}
+
+spherical_asd_all_points <- function(X, threads = 0L) {
+    .Call(`_simplicialdepth_spherical_asd_all_points`, X, threads)
 }
 

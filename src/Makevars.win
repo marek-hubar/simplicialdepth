@@ -1,2 +1,2 @@
-PKG_CXXFLAGS = -O3 -fopenmp
-PKG_LIBS = -fopenmp
+PKG_CXXFLAGS += -O3 $(shell "${R_HOME}/bin/Rscript" -e "RcppParallel::CxxFlags()")
+PKG_LIBS += $(shell "${R_HOME}/bin/Rscript" -e "RcppParallel::LdFlags()")

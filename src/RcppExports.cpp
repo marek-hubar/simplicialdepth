@@ -59,6 +59,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// SDk_parallel_threads
+long long SDk_parallel_threads(NumericMatrix Xinput_mat, NumericVector x_vec, int k, int threads);
+RcppExport SEXP _simplicialdepth_SDk_parallel_threads(SEXP Xinput_matSEXP, SEXP x_vecSEXP, SEXP kSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type Xinput_mat(Xinput_matSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type x_vec(x_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(SDk_parallel_threads(Xinput_mat, x_vec, k, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// SDk_all_points
+NumericVector SDk_all_points(NumericMatrix Xinput_mat, int k, int threads);
+RcppExport SEXP _simplicialdepth_SDk_all_points(SEXP Xinput_matSEXP, SEXP kSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type Xinput_mat(Xinput_matSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(SDk_all_points(Xinput_mat, k, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // simplicial_depth_2d
 long long simplicial_depth_2d(NumericMatrix points_mat, NumericVector q_vec);
 RcppExport SEXP _simplicialdepth_simplicial_depth_2d(SEXP points_matSEXP, SEXP q_vecSEXP) {
@@ -83,14 +110,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// spherical_asd_all_points
+NumericVector spherical_asd_all_points(NumericMatrix X, int threads);
+RcppExport SEXP _simplicialdepth_spherical_asd_all_points(SEXP XSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(spherical_asd_all_points(X, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_simplicialdepth_circular_asd", (DL_FUNC) &_simplicialdepth_circular_asd, 2},
     {"_simplicialdepth_circular_asd_all_arcs", (DL_FUNC) &_simplicialdepth_circular_asd_all_arcs, 1},
     {"_simplicialdepth_SDk", (DL_FUNC) &_simplicialdepth_SDk, 3},
     {"_simplicialdepth_SDk_parallel", (DL_FUNC) &_simplicialdepth_SDk_parallel, 3},
+    {"_simplicialdepth_SDk_parallel_threads", (DL_FUNC) &_simplicialdepth_SDk_parallel_threads, 4},
+    {"_simplicialdepth_SDk_all_points", (DL_FUNC) &_simplicialdepth_SDk_all_points, 3},
     {"_simplicialdepth_simplicial_depth_2d", (DL_FUNC) &_simplicialdepth_simplicial_depth_2d, 2},
     {"_simplicialdepth_spherical_asd", (DL_FUNC) &_simplicialdepth_spherical_asd, 2},
+    {"_simplicialdepth_spherical_asd_all_points", (DL_FUNC) &_simplicialdepth_spherical_asd_all_points, 2},
     {NULL, NULL, 0}
 };
 

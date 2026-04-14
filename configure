@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# Configure script for simplicialdepth
+# Generates src/Makevars from src/Makevars.in with RcppParallel flags.
+
+set -e
+
+: "${R_HOME:?R_HOME is not set}"
+
+RSCRIPT="${R_HOME}/bin/Rscript"
+
+if [ ! -x "$RSCRIPT" ]; then
+  echo "configure: cannot find Rscript at $RSCRIPT" 1>&2
+  exit 1
+fi
+
+# Query RcppParallel flags.
+PKG_CXXFLAGS=$($RSCRIPT -e "cat(RcppParallel::CxxFlags())")
+PKG_LIBS=$($RSCRIPT -e "cat(RcppParallel::LdFlags())")
+
+# Add rpath entries to find RcppParallel's bundled TBB at runtime.
+# - Relative rpath helps when packages are installed as siblings in a user library.
+# - Absolute rpath is needed for staged installs and some macOS configurations.
+UNAME_S=$(uname -s)
+if [ "$UNAME_S" = "Darwin" ]; then
+  TBB_PATH=$($RSCRIPT -e "cat(RcppParallel::tbbLibraryPath())")
+  PKG_LIBS="$PKG_LIBS -Wl,-rpath,@loader_path/../../RcppParallel/lib -Wl,-rpath,$TBB_PATH"
+else
+  PKG_LIBS="$PKG_LIBS -Wl,-rpath,\$\$ORIGIN/../../RcppParallel/lib"
+fi
+
+# Substitute into src/Makevars
+sed \
+  -e "s|@PKG_CXXFLAGS@|$PKG_CXXFLAGS|" \
+  -e "s|@PKG_LIBS@|$PKG_LIBS|" \
+  src/Makevars.in > src/Makevars
+
+exit 0

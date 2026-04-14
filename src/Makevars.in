@@ -1,0 +1,5 @@
+## Generated from src/Makevars.in by configure
+## Keep this file portable (no GNU make extensions)
+
+PKG_CXXFLAGS = @PKG_CXXFLAGS@
+PKG_LIBS = @PKG_LIBS@
