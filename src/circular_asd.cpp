@@ -9,6 +9,7 @@ using namespace Rcpp;
 struct Point2D_indexed {
     Point2D p;
     double angle;
+    double slope;
     double angle_mod_PI;
     bool label;
     int original_index;
@@ -107,91 +108,123 @@ long long circular_asd_01(Point2D ray, const std::vector<Point2D>& points) {
 }
 
 // [[Rcpp::export]]
-long long circular_asd(NumericMatrix X, NumericVector ray) {
+long long circular_asd(NumericMatrix X, NumericVector x) {
     int n = X.nrow();
     std::vector<Point2D> P(n);
-    // for (int i=0; i<n; i++)
-    //     P.push_back({X(i,0), X(i,1)});
     for (int i = 0; i < n; i++) {
         P[i].x = X(i, 0);
         P[i].y = X(i, 1);
     }
-    Point2D xx = {ray[0], ray[1]};
+    Point2D xx = {x[0], x[1]};
     return circular_asd_01(xx, P);
 }
 
 // An O(n log(n)) algorithm for angular simplicial depth based on the 01 sequence method
-std::vector<Arc> circular_asd_01_all_points(const std::vector<Point2D>& points) {
-    int m = points.size();
-    std::vector<Arc> arcs(m);
-    if (m < 2) return arcs;
-    std::vector<long long> N10s(m);
-    std::vector<double> angles(m);
+//
+// For each point r in the sample, we want the same quantity returned by:
+//   circular_asd_01(r, points \ {r})
+// but without re-sorting for every r.
+//
+// Key observation: sorting by angle modulo PI is equivalent to sorting by (global) angle modulo PI,
+// i.e. by alpha = atan2(p) mod PI. Relative angles for different rays induce only a cyclic shift.
+std::vector<long long> circular_asd_01_all_points(const std::vector<Point2D>& points) {
+    const int m = static_cast<int>(points.size());
+    std::vector<long long> depths(m, 0);
+    if (m <= 2) return depths;
 
-    int N0 = 0, N1 = 0;
+    struct Entry {
+        double alpha;   // angle modulo PI in [0, PI)
+        int upper;      // 1 if atan2(p) in [0, PI), else 0
+        int original_index;
+    };
 
-    std::vector<Point2D_indexed> sorted_2d_points(m);
-    for(int i=0; i<m; i++) {
-        sorted_2d_points[i].p = points[i],
-        // Find the polar angle with respect to the ray
-        sorted_2d_points[i].angle = atan2pi(points[i]),
-        sorted_2d_points[i].label = (sorted_2d_points[i].angle < M_PI);
-        // Angles modulo PI
-        sorted_2d_points[i].angle_mod_PI = sorted_2d_points[i].angle < M_PI ? sorted_2d_points[i].angle : sorted_2d_points[i].angle - M_PI;
-        sorted_2d_points[i].original_index = i;
-        angles[i] = sorted_2d_points[i].angle;
+    std::vector<Entry> entries(m);
+    for (int i = 0; i < m; ++i) {
+        const double theta = atan2pi(points[i]);
+        const int upper = (theta < M_PI) ? 1 : 0;
+        double alpha = theta;
+        if (alpha >= M_PI) alpha -= M_PI;
+        entries[i] = {alpha, upper, i};
     }
 
-    for (const auto& p : sorted_2d_points) N1 += p.label;
-    N0 = m - N1;
-    int N0_total = N0, N1_total = N1;
-
-    // std::sort(sorted_2d_points.begin(), sorted_2d_points.end(), [](const Point2D_indexed& a, const Point2D_indexed& b){
-    //     return a.angle_mod_PI < b.angle_mod_PI;
-    // });
-    parallel_sort(sorted_2d_points, [](const Point2D_indexed& a, const Point2D_indexed& b){
-        return a.angle_mod_PI < b.angle_mod_PI;
+    // Sort by alpha (equivalent to sorting by -x/y), tie-breaking deterministically.
+    parallel_sort(entries, [](const Entry& a, const Entry& b) {
+        if (a.alpha < b.alpha) return true;
+        if (a.alpha > b.alpha) return false;
+        if (a.upper != b.upper) return a.upper > b.upper; // put upper first
+        return a.original_index < b.original_index;
     });
 
-    // Compute the first N10
-    long long N10 = 0;
-    for (const auto& p : sorted_2d_points) {
-        if (p.label == 1) N10 += N0;
-        else N0--;
+    const int n = m;
+    std::vector<int> U(n);
+    std::vector<int> orig(n);
+    for (int i = 0; i < n; ++i) {
+        U[i] = entries[i].upper;
+        orig[i] = entries[i].original_index;
     }
-    // Save as first entry of all points
-    N10s[0] = N10;
 
-    for (int i=0, j=1; i<2*m-1 && j<m; i++) {
-        if (sorted_2d_points[mod(i,m)].label == i / m) {
-            N0_total = N0_total - 1, N1_total = N1_total + 1;
+    // Prefix counts and inversions on U.
+    std::vector<long long> ones_prefix(n + 1, 0), zeros_prefix(n + 1, 0);
+    std::vector<long long> inv10_prefix(n + 1, 0), inv01_prefix(n + 1, 0);
+    for (int i = 0; i < n; ++i) {
+        ones_prefix[i + 1] = ones_prefix[i] + U[i];
+        zeros_prefix[i + 1] = zeros_prefix[i] + (1 - U[i]);
+
+        // inv10: count of pairs (i<j) with U[i]=1, U[j]=0.
+        inv10_prefix[i + 1] = inv10_prefix[i] + (U[i] == 0 ? ones_prefix[i] : 0);
+        // inv01: count of pairs (i<j) with U[i]=0, U[j]=1.
+        inv01_prefix[i + 1] = inv01_prefix[i] + (U[i] == 1 ? zeros_prefix[i] : 0);
+    }
+
+    // Suffix counts and inversions on U.
+    std::vector<long long> ones_suffix(n + 1, 0), zeros_suffix(n + 1, 0);
+    std::vector<long long> inv10_suffix(n + 1, 0), inv01_suffix(n + 1, 0);
+    for (int i = n - 1; i >= 0; --i) {
+        ones_suffix[i] = ones_suffix[i + 1] + U[i];
+        zeros_suffix[i] = zeros_suffix[i + 1] + (1 - U[i]);
+
+        inv10_suffix[i] = inv10_suffix[i + 1] + (U[i] == 1 ? zeros_suffix[i + 1] : 0);
+        inv01_suffix[i] = inv01_suffix[i + 1] + (U[i] == 0 ? ones_suffix[i + 1] : 0);
+    }
+
+    // For ray at position k in the alpha-order, the angle_mod_PI order for the remaining points is:
+    //   suffix (k+1..n-1) followed by prefix (0..k-1).
+    // Labels (relative to the ray) are:
+    //   - for alpha >= alpha_ray: label = (upper == upper_ray)
+    //   - for alpha <  alpha_ray: label = (upper != upper_ray)
+    // Under general position (no alpha ties), this yields closed-form expressions below.
+    for (int k = 0; k < n; ++k) {
+        const int upper_ray = U[k];
+
+        const long long ones_pref = ones_prefix[k];
+        const long long zeros_pref = zeros_prefix[k];
+        const long long ones_suf = ones_suffix[k + 1];
+        const long long zeros_suf = zeros_suffix[k + 1];
+
+        long long N10 = 0;
+        if (upper_ray == 1) {
+            // suffix labels = U, prefix labels = 1-U
+            N10 = inv10_suffix[k + 1] + inv01_prefix[k] + ones_suf * ones_pref;
+        } else {
+            // suffix labels = 1-U, prefix labels = U
+            N10 = inv01_suffix[k + 1] + inv10_prefix[k] + zeros_suf * zeros_pref;
         }
-        else {
-            N1_total = N1_total - 1;
-            N10 = N10 - N0_total + N1_total;
-            N0_total = N0_total + 1;
-            N10s[j] = N10;
-            j++;
-        }
+
+        depths[orig[k]] = N10;
     }
 
-    // Sort the angles by size (this only requires O(2*n)=O(n), since the presorted points only need to be iterated through twice
-    for (int i=0, j=0; i<2*m && j<m; i++) {
-        if (sorted_2d_points[mod(i,m)].label == 1-i/m)
-            angles[j++] = sorted_2d_points[mod(i,m)].angle;
-    }
-
-    for (int i=0; i<m; i++) {
-        int orig_index = sorted_2d_points[i].original_index;
-        arcs[orig_index].left_angle = angles[mod(i-1,m)],
-        arcs[orig_index].right_angle = angles[i],
-        arcs[orig_index].depth = N10s[i],
-        arcs[orig_index].right_point_depth = (N10s[i] + N10s[mod(i+1,m)] - m + 1) / 2;
-        arcs[orig_index].right_point = sorted_2d_points[i].p;
-    }
-    
-    return arcs;
+    return depths;
 }
+
+// std::vector<long long> circular_asd_all_points(const std::vector<Point2D>& X) {
+//     int n = X.size();
+//     std::vector<long long> depths(n);
+//     if (n <= 2) return depths;
+//
+//     depths[0] = circular_asd_01(X[0], std::vector<Point2D>(X.begin() + 1, X.end()));
+//
+//     return depths;
+// }
 
 // [[Rcpp::export]]
 DataFrame circular_asd_all_arcs(NumericMatrix points_mat) {
@@ -204,27 +237,17 @@ DataFrame circular_asd_all_arcs(NumericMatrix points_mat) {
         points_vec[i].y = points_mat(i, 1);
     }
 
-    std::vector<Arc> arcs = circular_asd_01_all_points(points_vec);
+    std::vector<long long> arcs = circular_asd_01_all_points(points_vec);
 
     // Convert std::vector<Arc> to DataFrame
     int m = arcs.size();
     NumericVector start_angles(m), end_angles(m), right_points_x(m), right_points_y(m);
     IntegerVector depths(m), right_point_depths(m);
     for (int i = 0; i < m; i++) {
-        start_angles[i]       = arcs[i].left_angle;
-        end_angles[i]         = arcs[i].right_angle;
-        depths[i]             = arcs[i].depth;
-        right_point_depths[i] = arcs[i].right_point_depth;
-        right_points_x[i]     = arcs[i].right_point.x;
-        right_points_y[i]     = arcs[i].right_point.y;
+        depths[i] = arcs[i];//.depth;
     }
 
     return DataFrame::create(
-        Named("start") = start_angles,
-        Named("end")   = end_angles,
-        Named("depth") = depths,
-        Named("end_point_depth") = right_point_depths,
-        Named("right_point_x") = right_points_x,
-        Named("right_point_y") = right_points_y
+        Named("depth") = depths//,
     );
 }

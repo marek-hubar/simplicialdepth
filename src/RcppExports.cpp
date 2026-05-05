@@ -11,14 +11,14 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // circular_asd
-long long circular_asd(NumericMatrix X, NumericVector ray);
-RcppExport SEXP _simplicialdepth_circular_asd(SEXP XSEXP, SEXP raySEXP) {
+long long circular_asd(NumericMatrix X, NumericVector x);
+RcppExport SEXP _simplicialdepth_circular_asd(SEXP XSEXP, SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type ray(raySEXP);
-    rcpp_result_gen = Rcpp::wrap(circular_asd(X, ray));
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(circular_asd(X, x));
     return rcpp_result_gen;
 END_RCPP
 }

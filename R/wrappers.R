@@ -120,16 +120,14 @@ angularsimplicialdepth <- function(X, x = NULL, threads = NULL) {
 
     if (d == 2) {
         if (is.null(x)) {
-            result <- circular_asd_all_arcs(X)
-            result$depth = result$depth / choose(n, 2)
-            result$end_point_depth = result$end_point_depth / choose(n-1, 2)
-            max_depth_index <- which.max(result$end_point_depth)
-            median <- c(result$right_point_x[max_depth_index], result$right_point_y[max_depth_index])
-            max_depth <- result$end_point_depth[max_depth_index]
-            return(depth_result(depth=result$end_point_depth,
-                                max_depth=max_depth,
-                                max_point=median,
-                                max_index=max_depth_index))
+            result <- circular_asd_all_arcs(X)$depth
+            result <- result / choose(n - 1, 2)
+            max_depth_index <- which.max(result)
+            max_depth <- result[max_depth_index]
+            return(depth_result(depth = result,
+                                max_depth = max_depth,
+                                max_point = X[max_depth_index,],
+                                max_index = max_depth_index))
         } else {
             if (is.matrix(x)) {
                 result <- apply(x, 1, function(row) {
@@ -187,7 +185,7 @@ angularsimplicialdepth <- function(X, x = NULL, threads = NULL) {
         X_new <- remove_x_from_X(X, x)
 
         if (nrow(X_new) >= 3) {
-            result <- spherical_asd(X_new, x) / choose(nrow(X_new), 3)
+            result <- spherical_asd(X_new, -x) / choose(nrow(X_new), 3)
         } else {
             result <- 0
         }
