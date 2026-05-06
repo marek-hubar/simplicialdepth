@@ -1,8 +1,13 @@
 #!/bin/sh
 
 # Cleanup script for simplicialdepth
-# Remove generated Makevars produced by configure.
+# Remove generated files produced during configure/build/check.
 
 rm -f src/Makevars
+rm -f src/*.o src/*.so src/*.a src/*.dylib
+rm -f src/symbols.rds
+rm -rf ./*.Rcheck ./..Rcheck
+rm -f ./*.tar.gz
+rm -f .RData .Rhistory .DS_Store
 
 exit 0

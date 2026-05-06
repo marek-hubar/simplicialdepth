@@ -6,8 +6,16 @@ Authors@R: c(
 		person("Marek", "Hubar", email = "24818710@cuni.cz", role = c("aut", "cre")),
 		person("Erik", "Mendros", role = "aut")
 	)
+Author: Marek Hubar [aut, cre], Erik Mendros [aut]
+Maintainer: Marek Hubar <24818710@cuni.cz>
 License: GPL-3
-Description: Rcpp + RcppParallel implementation of some depth functions.
+Description: Fast computation of simplicial depth, angular simplicial depth,
+    and k-hull depth in 2D and 3D using 'Rcpp' and 'RcppParallel'.
+URL: https://github.com/marek-hubar/simplicialdepth
+BugReports: https://github.com/marek-hubar/simplicialdepth/issues
+Encoding: UTF-8
 Imports: Rcpp, RcppParallel
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
 LinkingTo: Rcpp, RcppParallel
 RoxygenNote: 7.3.2

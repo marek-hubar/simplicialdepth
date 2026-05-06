@@ -3,7 +3,6 @@ triangle_contains_origin <- function(p1, p2, p3) {
     orient <- function(a, b, c) cross2(b - a, c - a)
     eps <- 1e-12
 
-    # Degenerate triangles are not considered containing.
     area2 <- orient(p1, p2, p3)
     if (abs(area2) <= eps) {
         return(FALSE)
@@ -25,14 +24,13 @@ testthat::test_that("2D angularsimplicialdepth for single point", {
     X <- matrix(rnorm(2 * n), ncol = 2)
     X <- X / sqrt(rowSums(X^2))
     x <- rnorm(2)
-    circular_asd <- get("angularsimplicialdepth", envir = asNamespace("simplicialdepth"))
 
-    res <- circular_asd(X, x)
+    res <- simplicialdepth::angularsimplicialdepth(X, x)
 
     expected <- 0
-    for (i in 1:(n-1)) {
-        for (j in (i+1):n) {
-            if (triangle_contains_origin(X[i,], X[j,], -x)) {
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            if (triangle_contains_origin(X[i, ], X[j, ], -x)) {
                 expected <- expected + 1
             }
         }

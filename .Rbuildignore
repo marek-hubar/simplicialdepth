@@ -1,1 +1,8 @@
-^qa-tests($|/)
+^tools($|/)
+^\\.github($|/)
+^\\.Rproj\\.user$
+^.*\\.Rproj$
+^\\.\\.Rcheck$
+^.*\\.Rcheck$
+^.*\\.tar\\.gz$
+^src/symbols\\.rds$
