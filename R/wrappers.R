@@ -170,7 +170,7 @@ angularsimplicialdepth <- function(X, x = NULL, threads = NULL) {
             result <- apply(x, 1, function(row) {
                 X_new <- remove_x_from_X(X, row)
                 if (nrow(X_new) >= 3) {
-                    spherical_asd(X_new, row) / choose(nrow(X_new), 3)
+                    spherical_asd(X_new, -row) / choose(nrow(X_new), 3)
                 } else {
                     return(0)
                 }})

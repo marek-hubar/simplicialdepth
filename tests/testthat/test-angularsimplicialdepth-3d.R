@@ -25,3 +25,19 @@ testthat::test_that("3D angularsimplicialdepth single query matches spherical_as
 
     testthat::expect_equal(as.numeric(res_q$depth), expected_q)
 })
+
+testthat::test_that("3D angularsimplicialdepth matrix queries match vector queries", {
+    set.seed(999)
+    X <- matrix(rnorm(90), ncol = 3)
+    X <- X / sqrt(rowSums(X^2))
+    Q <- X[c(2, 7, 15), , drop = FALSE]
+
+    res_mat <- simplicialdepth::angularsimplicialdepth(X, Q, threads = 1L)
+    res_vec <- vapply(
+        seq_len(nrow(Q)),
+        function(i) as.numeric(simplicialdepth::angularsimplicialdepth(X, Q[i, ], threads = 1L)$depth),
+        numeric(1)
+    )
+
+    testthat::expect_equal(as.numeric(res_mat$depth), res_vec)
+})

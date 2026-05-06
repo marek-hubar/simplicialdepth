@@ -9,7 +9,7 @@ testthat::test_that("spherical_asd_all_points matches leave-one-out spherical_as
     all_counts <- as.numeric(spherical_asd_all_points_cpp(X, threads = 1L))
     loo_counts <- vapply(
         seq_len(nrow(X)),
-        function(i) as.numeric(spherical_asd_cpp(X[-i, , drop = FALSE], X[i, ])),
+        function(i) as.numeric(spherical_asd_cpp(X[-i, , drop = FALSE], -X[i, ])),
         numeric(1)
     )
 

@@ -292,7 +292,11 @@ NumericVector spherical_asd_all_points(NumericMatrix X, int threads = 0) {
                     if (j == i) continue;
                     sample.push_back(P[static_cast<std::size_t>(j)]);
                 }
-                out[ii] = static_cast<double>(spherical_asd_toposweep(P[static_cast<std::size_t>(i)], sample));
+                Point3D ray = P[static_cast<std::size_t>(i)];
+                ray.x = -ray.x;
+                ray.y = -ray.y;
+                ray.z = -ray.z;
+                out[ii] = static_cast<double>(spherical_asd_toposweep(ray, sample));
             }
         }
     };
