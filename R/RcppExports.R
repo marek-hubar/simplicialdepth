@@ -5,8 +5,8 @@ circular_asd <- function(X, x) {
     .Call(`_simplicialdepth_circular_asd`, X, x)
 }
 
-circular_asd_all_arcs <- function(points_mat) {
-    .Call(`_simplicialdepth_circular_asd_all_arcs`, points_mat)
+circular_asd_all_points <- function(points_mat) {
+    .Call(`_simplicialdepth_circular_asd_all_points`, points_mat)
 }
 
 SDk <- function(Xinput_mat, x_vec, k) {

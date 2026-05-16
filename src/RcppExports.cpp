@@ -22,14 +22,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// circular_asd_all_arcs
-DataFrame circular_asd_all_arcs(NumericMatrix points_mat);
-RcppExport SEXP _simplicialdepth_circular_asd_all_arcs(SEXP points_matSEXP) {
+// circular_asd_all_points
+DataFrame circular_asd_all_points(NumericMatrix points_mat);
+RcppExport SEXP _simplicialdepth_circular_asd_all_points(SEXP points_matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type points_mat(points_matSEXP);
-    rcpp_result_gen = Rcpp::wrap(circular_asd_all_arcs(points_mat));
+    rcpp_result_gen = Rcpp::wrap(circular_asd_all_points(points_mat));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -138,7 +138,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_simplicialdepth_circular_asd", (DL_FUNC) &_simplicialdepth_circular_asd, 2},
-    {"_simplicialdepth_circular_asd_all_arcs", (DL_FUNC) &_simplicialdepth_circular_asd_all_arcs, 1},
+    {"_simplicialdepth_circular_asd_all_points", (DL_FUNC) &_simplicialdepth_circular_asd_all_points, 1},
     {"_simplicialdepth_SDk", (DL_FUNC) &_simplicialdepth_SDk, 3},
     {"_simplicialdepth_SDk_parallel", (DL_FUNC) &_simplicialdepth_SDk_parallel, 3},
     {"_simplicialdepth_SDk_parallel_threads", (DL_FUNC) &_simplicialdepth_SDk_parallel_threads, 4},

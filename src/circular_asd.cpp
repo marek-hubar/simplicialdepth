@@ -174,7 +174,7 @@ long long circular_asd(NumericMatrix X, NumericVector x) {
 }
 
 // [[Rcpp::export]]
-DataFrame circular_asd_all_arcs(NumericMatrix points_mat) {
+DataFrame circular_asd_all_points(NumericMatrix points_mat) {
     const std::vector<Point2D> points = matrix_to_points(points_mat);
     const std::vector<long long> depth_counts = circular_asd_all_points_01(points);
 

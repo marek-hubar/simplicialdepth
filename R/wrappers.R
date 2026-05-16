@@ -125,7 +125,7 @@ angularsimplicialdepth <- function(X, x = NULL, threads = NULL) {
                                     max_point = X[1,],
                                     max_index = 1))
             }
-            result <- circular_asd_all_arcs(X)$depth
+            result <- circular_asd_all_points(X)$depth
             result <- result / choose(n - 1, 2)
             max_depth_index <- which.max(result)
             max_depth <- result[max_depth_index]

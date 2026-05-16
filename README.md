@@ -182,7 +182,7 @@ PKG_CXXFLAGS = -O3 -Wall -Werror   # Fail on any warnings
 
 ### Circular Angular Simplicial Depth (2D)
 
-Counts the number of arcs (pairs of sample points) that contain each query point when viewed from the origin on a circle.
+Counts the number of pairs of sample points (relative to the origin on a circle) that contain each query point.
 
 - **All-points mode**: O(n²) - Topological sweep for each point  
 - **Query-based**: O(n log n) - Angular sorting and half-plane counting

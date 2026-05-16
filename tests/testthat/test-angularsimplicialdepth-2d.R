@@ -46,7 +46,7 @@ testthat::test_that("2D all-points ASD matches per-point circular_asd", {
     X <- X / sqrt(rowSums(X^2))
 
     circular_asd_single <- get("circular_asd", envir = asNamespace("simplicialdepth"))
-    circular_asd_all <- get("circular_asd_all_arcs", envir = asNamespace("simplicialdepth"))
+    circular_asd_all <- get("circular_asd_all_points", envir = asNamespace("simplicialdepth"))
 
     res_counts <- circular_asd_all(X)$depth
     expected_counts <- vapply(seq_len(n), function(k) {
