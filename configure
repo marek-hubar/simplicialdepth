@@ -1,7 +1,15 @@
 #!/bin/sh
 
-# Configure script for simplicialdepth
+# Configure script for simplicialdepth (Unix/Linux/macOS)
 # Generates src/Makevars from src/Makevars.in with RcppParallel flags.
+#
+# This script:
+#   1. Verifies R_HOME is set and Rscript is available
+#   2. Queries RcppParallel for C++ and linker flags
+#   3. Sets up runtime library paths (rpath) for TBB
+#   4. Substitutes values into src/Makevars.in template
+#
+# On failure, the build will fail with a clear error message.
 
 set -e
 
@@ -14,25 +22,47 @@ if [ ! -x "$RSCRIPT" ]; then
   exit 1
 fi
 
-# Query RcppParallel flags.
-PKG_CXXFLAGS=$($RSCRIPT -e "cat(RcppParallel::CxxFlags())")
-PKG_LIBS=$($RSCRIPT -e "cat(RcppParallel::LdFlags())")
+# Query RcppParallel flags. If this fails, the build fails (intentional).
+echo "configure: Querying RcppParallel for compiler and linker flags..."
+PKG_CXXFLAGS=$($RSCRIPT -e "cat(RcppParallel::CxxFlags())" 2>/dev/null) || {
+  echo "configure: ERROR - Could not query RcppParallel::CxxFlags()" 1>&2
+  echo "configure: Is RcppParallel installed? (run: install.packages('RcppParallel'))" 1>&2
+  exit 1
+}
+
+PKG_LIBS=$($RSCRIPT -e "cat(RcppParallel::LdFlags())" 2>/dev/null) || {
+  echo "configure: ERROR - Could not query RcppParallel::LdFlags()" 1>&2
+  echo "configure: Is RcppParallel installed? (run: install.packages('RcppParallel'))" 1>&2
+  exit 1
+}
 
 # Add rpath entries to find RcppParallel's bundled TBB at runtime.
 # - Relative rpath helps when packages are installed as siblings in a user library.
 # - Absolute rpath is needed for staged installs and some macOS configurations.
 UNAME_S=$(uname -s)
 if [ "$UNAME_S" = "Darwin" ]; then
-  TBB_PATH=$($RSCRIPT -e "cat(RcppParallel::tbbLibraryPath())")
-  PKG_LIBS="$PKG_LIBS -Wl,-rpath,@loader_path/../../RcppParallel/lib -Wl,-rpath,$TBB_PATH"
+  echo "configure: macOS detected, setting up dylib runtime paths..."
+  TBB_PATH=$($RSCRIPT -e "cat(RcppParallel::tbbLibraryPath())" 2>/dev/null) || {
+    echo "configure: WARNING - Could not query TBB library path, attempting fallback" 1>&2
+    TBB_PATH=""
+  }
+  if [ -n "$TBB_PATH" ]; then
+    PKG_LIBS="$PKG_LIBS -Wl,-rpath,@loader_path/../../RcppParallel/lib -Wl,-rpath,$TBB_PATH"
+  else
+    PKG_LIBS="$PKG_LIBS -Wl,-rpath,@loader_path/../../RcppParallel/lib"
+  fi
 else
+  echo "configure: Linux detected, setting up ELF runtime paths..."
   PKG_LIBS="$PKG_LIBS -Wl,-rpath,\$\$ORIGIN/../../RcppParallel/lib"
 fi
 
 # Substitute into src/Makevars
+echo "configure: Generating src/Makevars from src/Makevars.in..."
 sed \
   -e "s|@PKG_CXXFLAGS@|$PKG_CXXFLAGS|" \
   -e "s|@PKG_LIBS@|$PKG_LIBS|" \
   src/Makevars.in > src/Makevars
 
+echo "configure: SUCCESS - src/Makevars generated"
 exit 0
+

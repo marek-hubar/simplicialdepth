@@ -17,9 +17,6 @@ All points are projected onto a unit circle (2D) or sphere (3D) before depth com
   \item If a numeric vector of length \eqn{d}: computes the depth of this single point.
   \item If a numeric matrix with \eqn{d} columns: computes depths for each row.
 }}
-
-\item{threads}{Optional integer. Number of worker threads to use for computations that can be parallelized.
-If `NULL` (default) or non-positive, the default RcppParallel/TBB setting is used.}
 }
 \value{
 An object of class \code{depth_result} with components:

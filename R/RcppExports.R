@@ -29,6 +29,10 @@ simplicial_depth_2d <- function(points_mat, q_vec) {
     .Call(`_simplicialdepth_simplicial_depth_2d`, points_mat, q_vec)
 }
 
+simplicial_depth_3d <- function(X, q, threads = 0L) {
+    .Call(`_simplicialdepth_simplicial_depth_3d`, X, q, threads)
+}
+
 spherical_asd <- function(X, ray) {
     .Call(`_simplicialdepth_spherical_asd`, X, ray)
 }

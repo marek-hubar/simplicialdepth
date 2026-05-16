@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Configure script for simplicialdepth on Windows
+# Generates src/Makevars.win from src/Makevars.win.in with RcppParallel flags.
+#
+# This script:
+#   1. Verifies R_HOME is set and Rscript is available
+#   2. Queries RcppParallel for compiler and linker flags
+#   3. Substitutes values into src/Makevars.win.in template
+#
+# If this script fails, a fallback src/Makevars.win is already in place,
+# allowing the build to continue (RcppParallel linking is handled via DESCRIPTION).
+
+set -e
+
+: "${R_HOME:?R_HOME is not set}"
+
+RSCRIPT="${R_HOME}/bin/Rscript"
+
+if [ ! -x "$RSCRIPT" ]; then
+  echo "configure.win: cannot find Rscript at $RSCRIPT" 1>&2
+  exit 1
+fi
+
+# Query RcppParallel flags for Windows.
+# If this fails, we'll fall back to the pre-generated src/Makevars.win.
+echo "configure.win: Querying RcppParallel for Windows compiler and linker flags..."
+PKG_CXXFLAGS=$($RSCRIPT -e "cat(RcppParallel::CxxFlags())" 2>/dev/null) || {
+  echo "configure.win: WARNING - Could not query RcppParallel::CxxFlags()" 1>&2
+  echo "configure.win: Using pre-generated src/Makevars.win" 1>&2
+  exit 0
+}
+
+PKG_LIBS=$($RSCRIPT -e "cat(RcppParallel::LdFlags())" 2>/dev/null) || {
+  echo "configure.win: WARNING - Could not query RcppParallel::LdFlags()" 1>&2
+  echo "configure.win: Using pre-generated src/Makevars.win" 1>&2
+  exit 0
+}
+
+# Substitute into src/Makevars.win
+echo "configure.win: Generating src/Makevars.win from src/Makevars.win.in..."
+sed \
+  -e "s|@PKG_CXXFLAGS@|$PKG_CXXFLAGS|" \
+  -e "s|@PKG_LIBS@|$PKG_LIBS|" \
+  src/Makevars.win.in > src/Makevars.win
+
+echo "configure.win: SUCCESS - src/Makevars.win generated"
+exit 0
+

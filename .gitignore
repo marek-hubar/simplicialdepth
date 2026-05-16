@@ -1,13 +1,29 @@
+# R build/check artifacts
 *.o
 *.so
+*.a
 *.out
 .RData
 .Rhistory
 .DS_Store
-
-# R package build/check artifacts
 *.Rcheck/
 *.tar.gz
+00LOCK-*
 
-# Generated at install time by configure
+# Generated at build time
 src/Makevars
+src/Makevars.win
+src/symbols.rds
+
+# Editor/IDE artifacts
+.Rproj.user/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.bak
+*.tmp

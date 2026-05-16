@@ -10,9 +10,6 @@ simplicialdepth(X, x = NULL, threads = NULL)
 \item{X}{Numeric matrix of size \eqn{n \times d} containing sample points.}
 
 \item{x}{Optional. A query point or set of points (vector or matrix) with same column dimension as `X`.}
-
-\item{threads}{Optional integer. Number of worker threads to use for computations that can be parallelized.
-If `NULL` (default) or non-positive, the default RcppParallel/TBB setting is used.}
 }
 \value{
 An object of class \code{depth_result} with components:

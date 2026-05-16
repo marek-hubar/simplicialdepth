@@ -2,12 +2,27 @@
 
 # Cleanup script for simplicialdepth
 # Remove generated files produced during configure/build/check.
+# Preserves source files and important configuration templates.
 
+# Generated configuration files (will be regenerated on next install)
 rm -f src/Makevars
+rm -f src/Makevars.win
+
+# Compiled object files and libraries
 rm -f src/*.o src/*.so src/*.a src/*.dylib
+
+# Symbol and debug information
 rm -f src/symbols.rds
-rm -rf ./*.Rcheck ./..Rcheck
-rm -f ./*.tar.gz
-rm -f .RData .Rhistory .DS_Store
+
+# R package check artifacts
+rm -rf ./*.Rcheck ./..Rcheck ..Rcheck/*
+
+# Binary packages and archives
+rm -f ./*.tar.gz ./*.zip
+
+# R history and workspace files
+rm -f .RData .Rhistory
+rm -f .DS_Store
 
 exit 0
+

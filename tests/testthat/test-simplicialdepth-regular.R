@@ -80,11 +80,59 @@ testthat::test_that("2D simplicialdepth all points matches brute force leave-one
 
 testthat::test_that("3D simplicialdepth single query matches brute force", {
     set.seed(201)
-    X <- matrix(rnorm(3 * 11), ncol = 3)
+    X <- matrix(rnorm(3 * 20), ncol = 3)
     q <- c(0.1, -0.2, 0.3)
 
     res <- simplicialdepth::simplicialdepth(X, q, threads = 1L)
     expected <- bruteforce_sd3d_count(X, q) / choose(nrow(X), 4)
+
+    testthat::expect_equal(as.numeric(res$depth), as.numeric(expected))
+})
+
+testthat::test_that("3D simplicial_depth_3d() count matches brute force", {
+    set.seed(203)
+    X <- matrix(rnorm(3 * 20), ncol = 3)
+    q <- c(-0.4, 0.2, 0.1)
+
+    got <- simplicialdepth:::simplicial_depth_3d(X, q, threads = 1L)
+    expected <- bruteforce_sd3d_count(X, q)
+
+    testthat::expect_equal(as.numeric(got), as.numeric(expected))
+})
+
+testthat::test_that("3D simplicial_depth_3d() matches brute force on multiple random instances", {
+    seeds <- c(210, 211, 212, 213)
+    for (s in seeds) {
+        set.seed(s)
+        X <- matrix(rnorm(3 * 9), ncol = 3)
+        q <- rnorm(3)
+
+        got <- simplicialdepth:::simplicial_depth_3d(X, q, threads = 1L)
+        expected <- bruteforce_sd3d_count(X, q)
+
+        testthat::expect_equal(as.numeric(got), as.numeric(expected))
+    }
+})
+
+testthat::test_that("3D simplicialdepth matrix queries match brute force", {
+    remove_x_from_X_local <- function(X, x) {
+        keep <- rowSums(X == matrix(x, nrow(X), ncol(X), byrow = TRUE)) != ncol(X)
+        X[keep, , drop = FALSE]
+    }
+
+    set.seed(214)
+    X <- matrix(rnorm(3 * 9), ncol = 3)
+    Q <- rbind(
+        c(0.1, 0.2, -0.3),
+        c(-0.4, 0.1, 0.2),
+        c(0.3, -0.2, 0.5)
+    )
+
+    res <- simplicialdepth::simplicialdepth(X, Q, threads = 1L)
+    expected <- apply(Q, 1, function(row) {
+        X_new <- remove_x_from_X_local(X, row)
+        bruteforce_sd3d_count(X_new, row) / choose(nrow(X_new), 4)
+    })
 
     testthat::expect_equal(as.numeric(res$depth), as.numeric(expected))
 })

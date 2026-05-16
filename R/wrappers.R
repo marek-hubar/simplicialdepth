@@ -2,12 +2,22 @@ input_check <- function(X, x=NULL) {
     if (!is.matrix(X) || !is.numeric(X))
         stop("X must be a numeric matrix")
 
+    if (any(is.na(X)) || any(is.nan(X)) || any(!is.finite(X)))
+        stop("X must be a finite numeric matrix (no NA, NaN, or Inf values)")
+
     n <- nrow(X)
     d <- ncol(X)
+
+    if (n == 0)
+        stop("X must contain at least one row")
+    if (d == 0)
+        stop("X must have at least one column")
 
     if (!is.null(x)) {
         if ((!is.vector(x) && !is.matrix(x)) || !is.numeric(x))
             stop("x must be a numeric matrix or a numeric vector.")
+        if (any(is.na(x)) || any(is.nan(x)) || any(!is.finite(x)))
+            stop("x must be finite (no NA, NaN, or Inf values)")
         if (is.matrix(x)) {
             if (ncol(x) != d) {
                 stop("x must have the same number of columns as X (i.e. ncol(x) = ncol(X)).")
@@ -57,12 +67,6 @@ print.depth_result <- function(x, ...) {
   invisible(x)
 }
 
-spherical_asd_on_one_point <- function(X, i) {
-    new_X <- X[-i,]
-    x <- X[i,]
-    return(spherical_asd(new_X, x))
-}
-
 #' Angular Simplicial Depth
 #'
 #' Computes the angular simplicial depth for 2D or 3D data, either for all
@@ -110,16 +114,17 @@ angularsimplicialdepth <- function(X, x = NULL, threads = NULL) {
 
     n <- nrow(X)
     d <- ncol(X)
-    if (is.null(x)) {
-        if (n < d+1)
-            stop("For x=NULL, X must have more rows than columns.")
-    } else {
-        if (n < d)
-            stop("X must have at least as many rows as columns.")
-    }
 
     if (d == 2) {
         if (is.null(x)) {
+            if (n < d+1) {
+                # Return zero depths for all points
+                result <- rep(0, n)
+                return(depth_result(depth = result,
+                                    max_depth = 0,
+                                    max_point = X[1,],
+                                    max_index = 1))
+            }
             result <- circular_asd_all_arcs(X)$depth
             result <- result / choose(n - 1, 2)
             max_depth_index <- which.max(result)
@@ -158,6 +163,14 @@ angularsimplicialdepth <- function(X, x = NULL, threads = NULL) {
     }
     if (d == 3) {
         if (is.null(x)) {
+            if (n < d+1) {
+                # Return zero depths for all points
+                result <- rep(0, n)
+                return(depth_result(depth = result,
+                                    max_depth = 0,
+                                    max_point = X[1,],
+                                    max_index = 1))
+            }
             result <- spherical_asd_all_points(X, threads_i) / choose(n-1, 3)
             max_depth_index <- which.max(result)
             return(depth_result(depth=result,
@@ -203,12 +216,6 @@ sd2d_on_one_point <- function(X, i) {
     return(simplicial_depth_2d(new_X, x))
 }
 
-sdk_on_one_point <- function(X, i, k) {
-    new_X <- X[-i,]
-    x <- X[i,]
-    return(SDk_parallel(new_X, x, k))
-}
-
 #' Simplicial Depth
 #'
 #' Computes the simplicial depth for 2D or 3D data, either for all points in a sample
@@ -252,11 +259,31 @@ simplicialdepth <- function(X, x=NULL, threads = NULL) {
     d <- ncol(X)
 
     if (is.null(x)) {
-        if (n < d+2)
-            stop("For x=NULL, X must have at least 2 more rows than columns.")
+        if (n < d+2) {
+            # Return zero depths for all points
+            result <- rep(0, n)
+            return(depth_result(depth=result,
+                                max_depth=0,
+                                max_point=X[1, ],
+                                max_index=1))
+        }
     } else {
-        if (n < d+1)
-            stop("X must have more rows than columns.")
+        if (n < d+1) {
+            # For matrix x: return zero depths for all query points
+            if (is.matrix(x)) {
+                result <- rep(0, nrow(x))
+                return(depth_result(depth=result,
+                                    max_depth=0,
+                                    max_point=x[1, ],
+                                    max_index=1))
+            } else {
+                # For single query point: return depth of 0
+                return(depth_result(depth=c(0),
+                                    max_depth=0,
+                                    max_point=x,
+                                    max_index=1))
+            }
+        }
     }
 
     if (d == 2) {
@@ -285,7 +312,7 @@ simplicialdepth <- function(X, x=NULL, threads = NULL) {
         # The only remaining option is that x is a numeric vector
         X_new <- remove_x_from_X(X, x)
         if (nrow(X_new) >= 3) {
-            result <- simplicial_depth_2d(X,x) / choose(n, 3)
+            result <- simplicial_depth_2d(X_new, x) / choose(nrow(X_new), 3)
         } else {
             result <- 0
         }
@@ -307,7 +334,7 @@ simplicialdepth <- function(X, x=NULL, threads = NULL) {
             result <- apply(x, 1, function(row) {
                 X_new <- remove_x_from_X(X, row)
                 if (nrow(X_new) >= 4) {
-                    SDk_parallel_threads(X_new, row, 4L, threads_i) / choose(nrow(X_new), 4)
+                    simplicial_depth_3d(X_new, row, threads_i) / choose(nrow(X_new), 4)
                 } else {
                     return(0)
                 }})
@@ -319,7 +346,7 @@ simplicialdepth <- function(X, x=NULL, threads = NULL) {
         }
         X_new <- remove_x_from_X(X, x)
         if (nrow(X_new) >= 4) {
-            result <- SDk_parallel_threads(X_new, x, 4L, threads_i) / choose(nrow(X_new), 4)
+            result <- simplicial_depth_3d(X_new, x, threads_i) / choose(nrow(X_new), 4)
         } else {
             return(0)
         }
