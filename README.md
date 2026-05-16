@@ -100,14 +100,12 @@ All 16 tests should pass:
 ### Algorithm Complexity
 
 #### Circular Angular Simplicial Depth (2D)
-- **All-points mode**: O(n²) - Topological sweep algorithm for each point
+- **All-points mode** (leave-one-out): O(n²) - Topological sweep algorithm for each point
 - **Query-based**: O(n log n) per query - Sort and angular sweep
-- **Leave-one-out variant**: O(n) + overhead for all-points computation
 
 #### Spherical Angular Simplicial Depth (3D)
-- **All-points mode**: O(n²) - Topological sweep algorithm for each point
+- **All-points mode** (leave-one-out): O(n²) - Topological sweep algorithm for each point
 - **Query-based**: O(n²) per query - Gnomonic projection + topological sweep (with antipode evaluation)
-- **Leave-one-out variant**: O(n) + overhead for all-points computation
 
 #### Simplicial Depth (2D)
 - **All-points mode**: O(n³) - Leave-one-out: n × O(n²) containment checks
