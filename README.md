@@ -108,7 +108,7 @@ All 16 tests should pass:
 - **Query-based**: O(n²) per query - Gnomonic projection + topological sweep (with antipode evaluation)
 
 #### Simplicial Depth (2D)
-- **All-points mode**: O(n³) - Leave-one-out: n × O(n²) containment checks
+- **All-points mode**: O(n² log n) - Leave-one-out: n × O(n log n) topological sweep
 - **Query-based**: O(n log n) per query - Topological sweep + point-in-triangle tests
 
 #### Simplicial Depth (3D)
@@ -199,7 +199,7 @@ Counts the number of spherical triangles (triples of sample points) that contain
 
 Counts the number of triangles formed by sample points that contain each query point.
 
-- **All-points mode**: O(n³) - Leave-one-out: n × O(n²) topological sweep
+- **All-points mode**: O(n² log n) - Leave-one-out: n × O(n log n) topological sweep
 - **Query-based**: O(n log n) - Topological sweep algorithm
 
 ### 3D Simplicial Depth
