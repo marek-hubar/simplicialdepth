@@ -44,22 +44,7 @@ The package is compiled with optimizations for performance and code quality:
 
 - **`-O3`**: Maximum compiler optimization for fastest runtime execution
 - **`-Wall`**: Compiler warnings to catch potential bugs (clean compilation, no warnings)
-
-#### Optional: Link-Time Optimization (LTO)
-
-For 5-15% additional performance improvement (at the cost of 2-5x longer build time), enable Link-Time Optimization:
-
-```bash
-# Set environment variable before installation
-export PKG_CXXFLAGS="-O3 -Wall -flto"
-R CMD INSTALL .
-
-# Or edit src/Makevars.in and uncomment the -flto section
-```
-
-**Requirements for LTO:**
-- GCC 4.8+ or Clang 3.5+ (Linux/macOS)
-- MSVC 2015+ (Windows)
+- **`-flto`**: Link-Time Optimization for 5-15% additional performance gain
 
 ### Cross-Platform Support
 
@@ -112,12 +97,6 @@ All 16 tests should pass:
 
 ## Performance Notes
 
-### Compilation
-
-- Default build (with -O3): ~30-60 seconds
-- With LTO enabled (-flto): ~2-5 minutes
-- Build time varies by hardware and compiler version
-
 ### Runtime
 
 - 2D queries: O(n² log n) for all-points mode
@@ -165,7 +144,6 @@ PKG_CXXFLAGS = -O0 -O1 -O2 -O3  # Choose one
 
 # Additional optimizations
 PKG_CXXFLAGS = -O3 -march=native  # Optimize for local machine (not portable!)
-PKG_CXXFLAGS = -O3 -flto           # Link-time optimization (slower build)
 
 # Strict warnings
 PKG_CXXFLAGS = -O3 -Wall -Werror   # Fail on any warnings

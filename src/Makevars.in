@@ -4,20 +4,8 @@
 ## Compiler optimization and warning flags
 ## -O3: Maximum optimization for performance
 ## -Wall: Enable all common compiler warnings (catches potential bugs)
-PKG_CXXFLAGS = -O3 -Wall @PKG_CXXFLAGS@
-
-## OPTIONAL: Link-Time Optimization (-flto)
-## Uncomment the line below for 5-15% additional performance gain at the cost
-## of much longer compilation times (2-5x slower). Requires compatible toolchain:
-##   - GCC 4.8+ (-flto supported)
-##   - Clang 3.5+ (-flto supported)
-##   - MSVC 2015+ (-flto via /LTCG)
-##
-## Enabling LTO:
-##   PKG_CXXFLAGS = -O3 -Wall -flto @PKG_CXXFLAGS@
-##   PKG_LIBS = @PKG_LIBS@ -flto
-##
-## Or set environment variable: PKG_CXXFLAGS="-O3 -Wall -flto" R CMD INSTALL .
+## -flto: Link-Time Optimization for 5-15% additional performance gain
+PKG_CXXFLAGS = -O3 -Wall -flto @PKG_CXXFLAGS@
 
 ## Linker flags from RcppParallel (TBB) and runtime library paths
-PKG_LIBS = @PKG_LIBS@
+PKG_LIBS = @PKG_LIBS@ -flto

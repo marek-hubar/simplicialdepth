@@ -6,12 +6,9 @@
 ## with actual RcppParallel flags detected at build time.
 
 ## Compiler optimization and warning flags: -O3 for performance, -Wall for quality
-PKG_CXXFLAGS = -O3 -Wall @PKG_CXXFLAGS@
-
-## OPTIONAL: Link-Time Optimization (-flto)
-## Uncomment for ~5-15% performance gain (requires compatible toolchain)
-## PKG_CXXFLAGS = -O3 -Wall -flto @PKG_CXXFLAGS@
+## Link-Time Optimization (-flto) enabled for 5-15% additional performance
+PKG_CXXFLAGS = -O3 -Wall -flto @PKG_CXXFLAGS@
 
 ## TBB linker flags (will be replaced by configure.win if available)
 ## Fallback: empty string - Windows R will handle RcppParallel linking via DESCRIPTION
-PKG_LIBS = @PKG_LIBS@
+PKG_LIBS = @PKG_LIBS@ -flto
